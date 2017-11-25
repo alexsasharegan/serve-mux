@@ -22,6 +22,11 @@ export function NewRouter(): Router {
 }
 
 export class Router {
+	// 🌎 Public
+	public Type: MatcherType = "Router"
+	public MethodNotAllowedHandler: HandlerFunc = MethodNotAllowed
+	public NotFoundHandler: HandlerFunc = PageNotFound
+	public InternalServerErrHandler: ErrHandlerFunc = Router.InternalServerErrHandler
 	// ⚠️ Private
 	private parentRoute: ParentRoute | null = null
 	private routes: Route[] = []
@@ -30,13 +35,18 @@ export class Router {
 	private buildScheme: string = ""
 	private strictSlash: boolean = false
 	// private skipClean: boolean = false
-	// 🌎 Public
-	public Type: MatcherType = "Router"
-	public MethodNotAllowedHandler: HandlerFunc = MethodNotAllowed
-	public NotFoundHandler: HandlerFunc = PageNotFound
-	public InternalServerErrHandler: ErrHandlerFunc = Router.InternalServerErrHandler
 
-	Listen(server: Server, https: boolean = false) {
+	public static async InternalServerErrHandler(err: Error, _req: IncomingMessage, res: ServerResponse) {
+		if (res.headersSent) {
+			res.end()
+			return
+		}
+
+		res.writeHead(Status.InternalServerError, err.message)
+		res.end()
+	}
+
+	public Listen(server: Server, https: boolean = false) {
 		server.on("request", this.ServeHTTP)
 		server.on("error", this.HandleError)
 		server.on("close", this.Shutdown)
@@ -52,9 +62,9 @@ export class Router {
 	 * When there is a match, the route variables can be retrieved calling mux.Vars(request).
 	 */
 	@Bind
-	async ServeHTTP(req: IncomingMessage, res: ServerResponse): Promise<void> {
-		let match = NewRouteMatch(),
-			ctx = NewRequestContext()
+	public async ServeHTTP(req: IncomingMessage, res: ServerResponse): Promise<void> {
+		let match = NewRouteMatch()
+		let ctx = NewRequestContext()
 
 		if (!this.Match(req, match, ctx)) {
 			this.NotFoundHandler(req, res, ctx)
@@ -83,11 +93,11 @@ export class Router {
 		}
 	}
 
-	Use(middleware: Middleware): void {
+	public Use(middleware: Middleware): void {
 		this.middleware.push(middleware)
 	}
 
-	async ApplyMiddleware(req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void> {
+	public async ApplyMiddleware(req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void> {
 		let mw: Middleware
 		for (mw of this.middleware) {
 			await mw.Handle(req, res, ctx)
@@ -112,7 +122,7 @@ export class Router {
 	 *
 	 * @see RouteMatch
 	 */
-	Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean {
+	public Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean {
 		for (const route of this.routes) {
 			if (route.Match(req, match, ctx)) {
 				return true
@@ -123,7 +133,7 @@ export class Router {
 	}
 
 	@Bind
-	HandleError(err: Error): void {
+	public HandleError(err: Error): void {
 		if (process.env.NODE_ENV == "production") {
 			console.error(err)
 		}
@@ -144,14 +154,14 @@ export class Router {
 	 * be determined from a prefix alone. However, any subrouters created from that
 	 * route inherit the original StrictSlash setting.
 	 */
-	StrictSlash(value: boolean): void {
+	public StrictSlash(value: boolean): void {
 		this.strictSlash = value
 	}
 
 	/**
 	 * Handle registers a new route with a matcher for the URL path.
 	 */
-	Handle(tpl: string, handler: HandlerFunc): Route {
+	public Handle(tpl: string, handler: HandlerFunc): Route {
 		return this.NewRoute()
 			.Path(tpl)
 			.Handler(handler)
@@ -174,7 +184,7 @@ export class Router {
 	 * The above route will only match if both request header values match.
 	 * If the value is an empty string, it will match any value if the key is set.
 	 */
-	Headers(headers: IncomingHttpHeaders): Route {
+	public Headers(headers: IncomingHttpHeaders): Route {
 		return this.NewRoute().Headers(headers)
 	}
 
@@ -194,7 +204,7 @@ export class Router {
 	 * Variable names must be unique in a given route. They can be retrieved
 	 * calling mux.Vars(request).
 	 */
-	Host(tpl: string): Route {
+	public Host(tpl: string): Route {
 		return this.NewRoute().Host(tpl)
 	}
 
@@ -214,7 +224,7 @@ export class Router {
 	 * ```
 	 * Variable names must be unique in a given route. They can be retrieved calling mux.Vars(request).
 	 */
-	Path(tpl: string): Route {
+	public Path(tpl: string): Route {
 		return this.NewRoute().Path(tpl)
 	}
 
@@ -228,7 +238,7 @@ export class Router {
 	 *
 	 * Also note that the setting of Router.StrictSlash() has no effect on routes with a PathPrefix matcher.
 	 */
-	PathPrefix(tpl: string): Route {
+	public PathPrefix(tpl: string): Route {
 		return this.NewRoute().PathPrefix(tpl)
 	}
 
@@ -236,51 +246,41 @@ export class Router {
 	 * Methods registers a new route with a matcher for HTTP methods.
 	 * @see Route.Methods
 	 */
-	Methods(...methods: HttpMethod[]): Route {
+	public Methods(...methods: HttpMethod[]): Route {
 		return this.NewRoute().Methods(...methods)
 	}
 
 	/**
 	 * NewRoute registers an empty route.
 	 */
-	NewRoute(): Route {
+	public NewRoute(): Route {
 		let r = new Route(this)
 		this.routes.push(r)
 		return r
 	}
 
-	getBuildScheme() {
+	public getBuildScheme() {
 		if (!this.parentRoute) {
 			return this.buildScheme
 		}
 		return this.parentRoute.getBuildScheme()
 	}
-	getRegexpGroup(): routeRegexpGroup | null {
+	public getRegexpGroup(): routeRegexpGroup | null {
 		if (!this.parentRoute) {
 			return null
 		}
 		return this.parentRoute.getRegexpGroup()
 	}
-	getNamedRoutes(): { [key: string]: Route } {
+	public getNamedRoutes(): { [key: string]: Route } {
 		return this.namedRoutes
 	}
-	buildVars(map: { [key: string]: string }): { [key: string]: string } {
+	public buildVars(map: { [key: string]: string }): { [key: string]: string } {
 		return map
 	}
 
 	@Bind
-	Shutdown(): void {
+	public Shutdown(): void {
 		console.info("Shutting down.")
-	}
-
-	static async InternalServerErrHandler(err: Error, _req: IncomingMessage, res: ServerResponse) {
-		if (res.headersSent) {
-			res.end()
-			return
-		}
-
-		res.writeHead(Status.InternalServerError, err.message)
-		res.end()
 	}
 }
 
@@ -288,7 +288,7 @@ export function NewRouteMatch(): RouteMatch {
 	let m: RouteMatch = Object.create(null)
 	m.Vars = Object.create(null)
 	m.MatchErr = null
-	m.ApplyMiddleware = async () => {}
+	m.ApplyMiddleware = async () => undefined
 
 	return m
 }
@@ -297,21 +297,21 @@ export function NewRequestContext(): RequestContext {
 	let terminated = false
 
 	return Object.defineProperties(Object.create(null), {
-		Terminate: {
-			enumerable: false,
-			writable: false,
-			configurable: false,
-			value() {
-				terminated = true
-			},
-		},
 		IsTerminated: {
-			enumerable: true,
 			configurable: false,
+			enumerable: true,
 			get() {
 				return terminated
 			},
 			set: undefined,
+		},
+		Terminate: {
+			configurable: false,
+			enumerable: false,
+			writable: false,
+			value() {
+				terminated = true
+			},
 		},
 	})
 }

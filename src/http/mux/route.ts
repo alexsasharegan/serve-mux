@@ -13,9 +13,13 @@ import {
 import { HttpError } from "../error"
 import { Status } from "../status"
 import { hasOwn } from "../../util/object"
-import trimEnd from "lodash-es/trimEnd"
 
 export class Route {
+	/**
+	 * Request handler for the route.
+	 */
+	public handler: HandlerFunc
+
 	private matchers: Matcher[] = []
 	private middleware: Middleware[] = []
 	private buildScheme: string = ""
@@ -29,14 +33,10 @@ export class Route {
 	 * If true, when the path pattern is "/path//to", accessing "/path//to" will not redirect
 	 */
 	private skipClean: boolean = false
-	/**
-	 * Request handler for the route.
-	 */
-	public handler: HandlerFunc
 
 	constructor(private parentRoute: ParentRoute) {}
 
-	Handler(h: HandlerFunc): Route {
+	public Handler(h: HandlerFunc): Route {
 		this.handler = h
 		return this
 	}
@@ -44,7 +44,7 @@ export class Route {
 	/**
 	 * Match matches the route against the request.
 	 */
-	Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean {
+	public Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean {
 		let m: Matcher
 
 		for (m of this.matchers) {
@@ -72,17 +72,17 @@ export class Route {
 		return true
 	}
 
-	SubRouter(): Router {
+	public SubRouter(): Router {
 		let sr = new Router()
 		this.matchers.push(sr)
 		return sr
 	}
 
-	Use(middleware: Middleware) {
+	public Use(middleware: Middleware) {
 		this.middleware.push(middleware)
 	}
 
-	async ApplyMiddleware(req: IncomingMessage, res: ServerResponse, ctx: RequestContext) {
+	public async ApplyMiddleware(req: IncomingMessage, res: ServerResponse, ctx: RequestContext) {
 		let mw: Middleware
 		for (mw of this.middleware) {
 			await mw.Handle(req, res, ctx)
@@ -92,7 +92,7 @@ export class Route {
 		}
 	}
 
-	Methods(...methods: HttpMethod[]): Route {
+	public Methods(...methods: HttpMethod[]): Route {
 		this.matchers.push({
 			Type: "Method",
 			Match(req: IncomingMessage, match: RouteMatch) {
@@ -124,7 +124,7 @@ export class Route {
 	 * ```
 	 * Variable names must be unique in a given route. They can be retrieved calling mux.Vars(request).
 	 */
-	Path(tpl: string): Route {
+	public Path(tpl: string): Route {
 		if (tpl.indexOf("/") != 0) {
 			throw new TypeError(`Path template must begin with a '/'`)
 		}
@@ -139,7 +139,7 @@ export class Route {
 		return this
 	}
 
-	PathPrefix(tpl: string): Route {
+	public PathPrefix(tpl: string): Route {
 		if (tpl.indexOf("/") != 0) {
 			throw new TypeError(`Path template must begin with a '/'`)
 		}
@@ -158,7 +158,7 @@ export class Route {
 		return this
 	}
 
-	Headers(headers: IncomingHttpHeaders): Route {
+	public Headers(headers: IncomingHttpHeaders): Route {
 		this.matchers.push({
 			Type: "Method",
 			Match(req: IncomingMessage, _match: RouteMatch, _ctx: RequestContext) {
@@ -179,7 +179,7 @@ export class Route {
 		return this
 	}
 
-	Host(tpl: string): Route {
+	public Host(tpl: string): Route {
 		this.matchers.push({
 			Type: "Host",
 			Match(req: IncomingMessage, _match: RouteMatch, _ctx: RequestContext) {
@@ -190,7 +190,7 @@ export class Route {
 		return this
 	}
 
-	addRegexpMatcher(tpl: string, matchHost: boolean, matchPrefix: boolean, matchQuery: boolean): Error | null {
+	public addRegexpMatcher(tpl: string, matchHost: boolean, matchPrefix: boolean, matchQuery: boolean): Error | null {
 		// if this.err != null {
 		// 	return this.err
 		// }
@@ -199,7 +199,7 @@ export class Route {
 			throw new Error("💥")
 		}
 		if (!matchHost && !matchQuery) {
-			if (tpl.length > 0 && tpl[0] != "/") {
+			if (tpl.length > 0 && tpl[0] !== "/") {
 				return new Error(`mux: path must start with a slash, got ${tpl}`)
 			}
 			if (this.regexp.path != null) {
@@ -238,7 +238,7 @@ export class Route {
 		return null
 	}
 
-	getRegexpGroup() {
+	public getRegexpGroup() {
 		if (!this.regexp) {
 			let regexp: routeRegexpGroup | null = this.parentRoute.getRegexpGroup()
 			if (regexp == null) {
@@ -250,7 +250,7 @@ export class Route {
 		return this.regexp
 	}
 
-	getBuildScheme() {
+	public getBuildScheme() {
 		return this.parentRoute.getBuildScheme() + this.buildScheme
 	}
 
