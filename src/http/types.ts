@@ -2,8 +2,6 @@ import { IncomingMessage, ServerResponse } from "http"
 import { HttpError } from "./error"
 import { Route } from "./mux/index"
 
-export type HttpMethod = "CONNECT" | "DELETE" | "GET" | "HEAD" | "OPTIONS" | "PATCH" | "POST" | "PUT"
-
 /**
  * The HandlerFunc type is an adapter to allow the use of
  * ordinary functions as HTTP handlers. If f is a function
@@ -69,20 +67,18 @@ export interface Handler {
  * 	that will be passed to request handlers in the request/response lifecycle.
  */
 export interface RequestContext {
+	prototype: undefined
 	/**
 	 * Terminate is a mechanism to end a request/response cycle early.
 	 * This is for Middleware
 	 */
 	Terminate(): void
 	IsTerminated(): boolean
-
-	prototype: undefined
 	[key: string]: any
 }
 
 export type MatcherType = "Router" | "Method" | "Path" | "Header" | "Host"
 export interface Matcher {
-	Type: MatcherType
 	Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean
 
 	[key: string]: any
@@ -133,3 +129,37 @@ interface routeRegexp {
 	// Variable regexps (validators).
 	varsR: RegExp[]
 }
+export type HttpMethod =
+	| "ACL"
+	| "BIND"
+	| "CHECKOUT"
+	| "CONNECT"
+	| "COPY"
+	| "DELETE"
+	| "GET"
+	| "HEAD"
+	| "LINK"
+	| "LOCK"
+	| "M-SEARCH"
+	| "MERGE"
+	| "MKACTIVITY"
+	| "MKCALENDAR"
+	| "MKCOL"
+	| "MOVE"
+	| "NOTIFY"
+	| "OPTIONS"
+	| "PATCH"
+	| "POST"
+	| "PROPFIND"
+	| "PROPPATCH"
+	| "PURGE"
+	| "PUT"
+	| "REBIND"
+	| "REPORT"
+	| "SEARCH"
+	| "SUBSCRIBE"
+	| "TRACE"
+	| "UNBIND"
+	| "UNLINK"
+	| "UNLOCK"
+	| "UNSUBSCRIBE"

@@ -6,46 +6,34 @@
 	"scripts": {
 		"clean": "scripts/clean.js",
 		"watch": "tsc -w",
-		"build": "npm run clean && tsc",
+		"prebuild": "npm run clean",
+		"build": "tsc",
 		"dev": "cross-env NODE_ENV=local NODE_DEBUG=http,router,route run/server.js",
-		"release": "npm run release:version && npm run release:publish",
-		"release:version": "standard-version",
-		"release:publish": "git push --follow-tags origin master; npm publish",
+		"prerelease": "npm run build && npm test",
+		"release": "standard-version",
+		"postrelease": "git push --follow-tags origin master && npm publish",
 		"prepublishOnly": "npm run build",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
 		"lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'",
-		"pretest": "npm run lint",
 		"test": "jest"
 	},
-	"files": [
-		"lib"
-	],
+	"files": ["lib"],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/alexsasharegan/serve-mux.git"
 	},
-	"keywords": [
-		"server",
-		"mux",
-		"router"
-	],
+	"keywords": ["server", "mux", "router"],
 	"author": "Alex Regan <alex.joseph.regan@gmail.com> (https://github.com/alexsasharegan)",
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/alexsasharegan/serve-mux/issues"
 	},
 	"jest": {
-		"moduleFileExtensions": [
-			"ts",
-			"tsx",
-			"js"
-		],
+		"moduleFileExtensions": ["ts", "tsx", "js"],
 		"transform": {
 			"\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
 		},
-		"testMatch": [
-			"**/__tests__/*.(ts|js)",
-			"**/?(*.)(spec|test).(js|ts)"
-		]
+		"testMatch": ["**/__tests__/*.(ts|js)", "**/?(*.)(spec|test).(js|ts)"]
 	},
 	"homepage": "https://github.com/alexsasharegan/serve-mux#readme",
 	"devDependencies": {

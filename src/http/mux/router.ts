@@ -12,7 +12,6 @@ import {
 	RequestContext,
 	ErrHandlerFunc,
 	RouteMatch,
-	MatcherType,
 	ParentRoute,
 	routeRegexpGroup,
 } from "../types"
@@ -23,7 +22,6 @@ export function NewRouter(): Router {
 
 export class Router {
 	// 🌎 Public
-	public Type: MatcherType = "Router"
 	public MethodNotAllowedHandler: HandlerFunc = MethodNotAllowed
 	public NotFoundHandler: HandlerFunc = PageNotFound
 	public InternalServerErrHandler: ErrHandlerFunc = Router.InternalServerErrHandler
