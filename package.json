@@ -15,7 +15,7 @@
 		"prepublishOnly": "npm run build",
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
 		"lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'",
-		"test": "jest"
+		"test": "jest --coverage"
 	},
 	"files": ["lib"],
 	"repository": {
