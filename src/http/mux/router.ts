@@ -1,10 +1,10 @@
-import { IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http"
-import { Route } from "./route"
-import { MethodNotAllowed, PageNotFound } from "../handler"
-import { Server } from "net"
-import { format } from "util"
-import { Status } from "../status"
-import { Bind } from "../../util/bind"
+import { IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http";
+import { Route } from "./route";
+import { MethodNotAllowed, PageNotFound } from "../handler";
+import { Server } from "net";
+import { format } from "util";
+import { Status } from "../status";
+import { Bind } from "../../util/bind";
 import {
 	HttpMethod,
 	Middleware,
@@ -13,45 +13,58 @@ import {
 	ErrHandlerFunc,
 	RouteMatch,
 	ParentRoute,
-	routeRegexpGroup,
-} from "../types"
+	RouteRegexpGroup,
+} from "../types";
 
 export function NewRouter(): Router {
-	return new Router()
+	return new Router();
 }
 
 export class Router {
 	// 🌎 Public
-	public MethodNotAllowedHandler: HandlerFunc = MethodNotAllowed
-	public NotFoundHandler: HandlerFunc = PageNotFound
-	public InternalServerErrHandler: ErrHandlerFunc = Router.InternalServerErrHandler
+	public MethodNotAllowedHandler: HandlerFunc = MethodNotAllowed;
+	public NotFoundHandler: HandlerFunc = PageNotFound;
+	public InternalServerErrHandler: ErrHandlerFunc =
+		Router.InternalServerErrHandler;
 	// ⚠️ Private
-	private parentRoute: ParentRoute | null = null
-	private routes: Route[] = []
-	private middleware: Middleware[] = []
-	private namedRoutes: { [key: string]: Route } = Object.create(null)
-	private buildScheme: string = ""
-	private strictSlash: boolean = false
+	private parentRoute: ParentRoute | null = null;
+	private routes: Route[] = [];
+	private middleware: Middleware[] = [];
+	private namedRoutes: { [key: string]: Route } = Object.create(null);
+	private buildScheme: string = "";
+	private strictSlash: boolean = false;
 	// private skipClean: boolean = false
 
-	public static async InternalServerErrHandler(err: Error, _req: IncomingMessage, res: ServerResponse) {
+	public static async InternalServerErrHandler(
+		err: Error,
+		_req: IncomingMessage,
+		res: ServerResponse,
+	) {
 		if (res.headersSent) {
-			res.end()
-			return
+			res.end();
+			return;
 		}
 
-		res.writeHead(Status.InternalServerError, err.message)
-		res.end()
+		res.writeHead(Status.InternalServerError, err.message);
+		res.end();
 	}
 
 	public Listen(server: Server, https: boolean = false) {
-		server.on("request", this.ServeHTTP)
-		server.on("error", this.HandleError)
-		server.on("close", this.Shutdown)
+		server.on("request", this.ServeHTTP);
+		server.on("error", this.HandleError);
+		server.on("close", this.Shutdown);
 		server.on("listening", () => {
-			let { address, family, port } = server.address()
-			console.info(format(`Listening on http%s://%s:%d [%s]`, https ? "s" : "", address, port, family))
-		})
+			let { address, family, port } = server.address();
+			console.info(
+				format(
+					`Listening on http%s://%s:%d [%s]`,
+					https ? "s" : "",
+					address,
+					port,
+					family,
+				),
+			);
+		});
 	}
 
 	/**
@@ -60,47 +73,57 @@ export class Router {
 	 * When there is a match, the route variables can be retrieved calling mux.Vars(request).
 	 */
 	@Bind
-	public async ServeHTTP(req: IncomingMessage, res: ServerResponse): Promise<void> {
-		let match = NewRouteMatch()
-		let ctx = NewRequestContext()
+	public async ServeHTTP(
+		req: IncomingMessage,
+		res: ServerResponse,
+	): Promise<void> {
+		let match = NewRouteMatch();
+		let ctx = NewRequestContext();
 
 		if (!this.Match(req, match, ctx)) {
-			this.NotFoundHandler(req, res, ctx)
-			return
+			this.NotFoundHandler(req, res, ctx);
+			return;
 		}
 
-		if (match.MatchErr != null && match.MatchErr.code == Status.MethodNotAllowed) {
-			this.MethodNotAllowedHandler(req, res, ctx)
-			return
+		if (
+			match.MatchErr != null &&
+			match.MatchErr.code == Status.MethodNotAllowed
+		) {
+			this.MethodNotAllowedHandler(req, res, ctx);
+			return;
 		}
 
 		try {
-			await this.ApplyMiddleware(req, res, ctx)
+			await this.ApplyMiddleware(req, res, ctx);
 			if (ctx.IsTerminated) {
-				return
+				return;
 			}
 
-			await match.ApplyMiddleware(req, res, ctx)
+			await match.ApplyMiddleware(req, res, ctx);
 			if (ctx.IsTerminated) {
-				return
+				return;
 			}
 
-			match.Handler(req, res, ctx)
+			match.Handler(req, res, ctx);
 		} catch (err) {
-			this.InternalServerErrHandler(err, req, res, ctx)
+			this.InternalServerErrHandler(err, req, res, ctx);
 		}
 	}
 
 	public Use(middleware: Middleware): void {
-		this.middleware.push(middleware)
+		this.middleware.push(middleware);
 	}
 
-	public async ApplyMiddleware(req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void> {
-		let mw: Middleware
+	public async ApplyMiddleware(
+		req: IncomingMessage,
+		res: ServerResponse,
+		ctx: RequestContext,
+	): Promise<void> {
+		let mw: Middleware;
 		for (mw of this.middleware) {
-			await mw.Handle(req, res, ctx)
+			await mw.Handle(req, res, ctx);
 			if (ctx.IsTerminated) {
-				return
+				return;
 			}
 		}
 	}
@@ -120,20 +143,24 @@ export class Router {
 	 *
 	 * @see RouteMatch
 	 */
-	public Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean {
+	public Match(
+		req: IncomingMessage,
+		match: RouteMatch,
+		ctx: RequestContext,
+	): boolean {
 		for (const route of this.routes) {
 			if (route.Match(req, match, ctx)) {
-				return true
+				return true;
 			}
 		}
 
-		return false
+		return false;
 	}
 
 	@Bind
 	public HandleError(err: Error): void {
 		if (process.env.NODE_ENV == "production") {
-			console.error(err)
+			console.error(err);
 		}
 	}
 
@@ -153,7 +180,7 @@ export class Router {
 	 * route inherit the original StrictSlash setting.
 	 */
 	public StrictSlash(value: boolean): void {
-		this.strictSlash = value
+		this.strictSlash = value;
 	}
 
 	/**
@@ -162,7 +189,7 @@ export class Router {
 	public Handle(tpl: string, handler: HandlerFunc): Route {
 		return this.NewRoute()
 			.Path(tpl)
-			.Handler(handler)
+			.Handler(handler);
 	}
 
 	// Queries(...pairs: string[]): Route
@@ -183,7 +210,7 @@ export class Router {
 	 * If the value is an empty string, it will match any value if the key is set.
 	 */
 	public Headers(headers: IncomingHttpHeaders): Route {
-		return this.NewRoute().Headers(headers)
+		return this.NewRoute().Headers(headers);
 	}
 
 	/**
@@ -203,7 +230,7 @@ export class Router {
 	 * calling mux.Vars(request).
 	 */
 	public Host(tpl: string): Route {
-		return this.NewRoute().Host(tpl)
+		return this.NewRoute().Host(tpl);
 	}
 
 	/**
@@ -223,7 +250,7 @@ export class Router {
 	 * Variable names must be unique in a given route. They can be retrieved calling mux.Vars(request).
 	 */
 	public Path(tpl: string): Route {
-		return this.NewRoute().Path(tpl)
+		return this.NewRoute().Path(tpl);
 	}
 
 	/**
@@ -237,7 +264,7 @@ export class Router {
 	 * Also note that the setting of Router.StrictSlash() has no effect on routes with a PathPrefix matcher.
 	 */
 	public PathPrefix(tpl: string): Route {
-		return this.NewRoute().PathPrefix(tpl)
+		return this.NewRoute().PathPrefix(tpl);
 	}
 
 	/**
@@ -245,61 +272,61 @@ export class Router {
 	 * @see Route.Methods
 	 */
 	public Methods(...methods: HttpMethod[]): Route {
-		return this.NewRoute().Methods(...methods)
+		return this.NewRoute().Methods(...methods);
 	}
 
 	/**
 	 * NewRoute registers an empty route.
 	 */
 	public NewRoute(): Route {
-		let r = new Route(this)
-		this.routes.push(r)
-		return r
+		let r = new Route(this);
+		this.routes.push(r);
+		return r;
 	}
 
 	public getBuildScheme() {
 		if (!this.parentRoute) {
-			return this.buildScheme
+			return this.buildScheme;
 		}
-		return this.parentRoute.getBuildScheme()
+		return this.parentRoute.getBuildScheme();
 	}
-	public getRegexpGroup(): routeRegexpGroup | null {
+	public getRegexpGroup(): RouteRegexpGroup | null {
 		if (!this.parentRoute) {
-			return null
+			return null;
 		}
-		return this.parentRoute.getRegexpGroup()
+		return this.parentRoute.getRegexpGroup();
 	}
 	public getNamedRoutes(): { [key: string]: Route } {
-		return this.namedRoutes
+		return this.namedRoutes;
 	}
 	public buildVars(map: { [key: string]: string }): { [key: string]: string } {
-		return map
+		return map;
 	}
 
 	@Bind
 	public Shutdown(): void {
-		console.info("Shutting down.")
+		console.info("Shutting down.");
 	}
 }
 
 export function NewRouteMatch(): RouteMatch {
-	let m: RouteMatch = Object.create(null)
-	m.Vars = Object.create(null)
-	m.MatchErr = null
-	m.ApplyMiddleware = async () => undefined
+	let m: RouteMatch = Object.create(null);
+	m.Vars = Object.create(null);
+	m.MatchErr = null;
+	m.ApplyMiddleware = async () => undefined;
 
-	return m
+	return m;
 }
 
 export function NewRequestContext(): RequestContext {
-	let terminated = false
+	let terminated = false;
 
 	return Object.defineProperties(Object.create(null), {
 		IsTerminated: {
 			configurable: false,
 			enumerable: true,
 			get() {
-				return terminated
+				return terminated;
 			},
 			set: undefined,
 		},
@@ -308,8 +335,8 @@ export function NewRequestContext(): RequestContext {
 			enumerable: false,
 			writable: false,
 			value() {
-				terminated = true
+				terminated = true;
 			},
 		},
-	})
+	});
 }

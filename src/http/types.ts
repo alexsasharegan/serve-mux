@@ -1,6 +1,6 @@
-import { IncomingMessage, ServerResponse } from "http"
-import { HttpError } from "./error"
-import { Route } from "./mux/index"
+import { IncomingMessage, ServerResponse } from "http";
+import { HttpError } from "./error";
+import { Route } from "./mux/index";
 
 /**
  * The HandlerFunc type is an adapter to allow the use of
@@ -8,13 +8,19 @@ import { Route } from "./mux/index"
  * with the appropriate signature, HandlerFunc(f) is a
  * Handler that calls f.
  */
-export interface HandlerFunc {
-	(req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void>
-}
+export type HandlerFunc = (
+	req: IncomingMessage,
+	res: ServerResponse,
+	ctx: RequestContext,
+) => Promise<void>;
 
-export interface ErrHandlerFunc {
-	(err: Error, req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void>
-}
+export type ErrHandlerFunc = (
+	err: Error,
+	req: IncomingMessage,
+	res: ServerResponse,
+	ctx: RequestContext,
+) => Promise<void>;
+
 /**
  * Middleware can read the request/response to perform pre-processing
  * so as to reuse functionality across routes.
@@ -28,19 +34,27 @@ export interface ErrHandlerFunc {
  * **it must invoke the `Terminate` method on the RequestContext**.
  */
 export interface Middleware {
-	Handle(req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void>
+	Handle(
+		req: IncomingMessage,
+		res: ServerResponse,
+		ctx: RequestContext,
+	): Promise<void>;
 
-	[key: string]: any
+	[key: string]: any;
 }
 
 /**
  * MiddlewareRunner is an object that can register and apply middleware.
  */
 export interface MiddlewareRunner {
-	Use(middleware: Middleware): void
-	ApplyMiddleware(req: IncomingMessage, res: ServerResponse, ctx: RequestContext): Promise<void>
+	Use(middleware: Middleware): void;
+	ApplyMiddleware(
+		req: IncomingMessage,
+		res: ServerResponse,
+		ctx: RequestContext,
+	): Promise<void>;
 
-	[key: string]: any
+	[key: string]: any;
 }
 
 /**
@@ -53,9 +67,9 @@ export interface MiddlewareRunner {
  * provided Request.
  */
 export interface Handler {
-	ServeHTTP: HandlerFunc
+	ServeHTTP: HandlerFunc;
 
-	[key: string]: any
+	[key: string]: any;
 }
 
 /**
@@ -67,67 +81,67 @@ export interface Handler {
  * 	that will be passed to request handlers in the request/response lifecycle.
  */
 export interface RequestContext {
-	prototype: undefined
+	prototype: undefined;
 	/**
 	 * Terminate is a mechanism to end a request/response cycle early.
 	 * This is for Middleware
 	 */
-	Terminate(): void
-	IsTerminated(): boolean
-	[key: string]: any
+	Terminate(): void;
+	IsTerminated(): boolean;
+	[key: string]: any;
 }
 
-export type MatcherType = "Router" | "Method" | "Path" | "Header" | "Host"
+export type MatcherType = "Router" | "Method" | "Path" | "Header" | "Host";
 export interface Matcher {
-	Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean
+	Match(req: IncomingMessage, match: RouteMatch, ctx: RequestContext): boolean;
 
-	[key: string]: any
+	[key: string]: any;
 }
 
 export interface RouteMatch extends MiddlewareRunner {
-	Route: Route
-	Handler: HandlerFunc
-	Vars: { [key: string]: string }
-	MatchErr: HttpError | null
+	Route: Route;
+	Handler: HandlerFunc;
+	Vars: { [key: string]: string };
+	MatchErr: HttpError | null;
 }
 
 export interface ParentRoute {
-	getBuildScheme(): string
-	getNamedRoutes(): { [key: string]: Route }
-	getRegexpGroup(): routeRegexpGroup | null
-	buildVars(map: { [key: string]: string }): { [key: string]: string }
+	getBuildScheme(): string;
+	getNamedRoutes(): { [key: string]: Route };
+	getRegexpGroup(): RouteRegexpGroup | null;
+	buildVars(map: { [key: string]: string }): { [key: string]: string };
 }
 
 export interface Path {
 	//
 }
 
-export interface routeRegexpGroup {
-	host: routeRegexp
-	path: routeRegexp
-	queries: routeRegexp[]
+export interface RouteRegexpGroup {
+	host: RouteRegexp;
+	path: RouteRegexp;
+	queries: RouteRegexp[];
 }
 
-interface routeRegexp {
+interface RouteRegexp {
 	// The unmodified template.
-	template: string
+	template: string;
 	// True for host match, false for path or query string match.
-	matchHost: boolean
+	matchHost: boolean;
 	// True for query string match, false for path and host match.
-	matchQuery: boolean
+	matchQuery: boolean;
 	// The strictSlash value defined on the route, but disabled if PathPrefix was used.
-	strictSlash: boolean
+	strictSlash: boolean;
 	// Determines whether to use encoded req.URL.EscapedPath() or unencoded
 	// req.URL.Path for path matching
-	useEncodedPath: boolean
+	useEncodedPath: boolean;
 	// Expanded regexp.
-	regexp: RegExp
+	regexp: RegExp;
 	// Reverse template.
-	reverse: string
+	reverse: string;
 	// Variable names.
-	varsN: string[]
+	varsN: string[];
 	// Variable regexps (validators).
-	varsR: RegExp[]
+	varsR: RegExp[];
 }
 export type HttpMethod =
 	| "ACL"
@@ -162,4 +176,4 @@ export type HttpMethod =
 	| "UNBIND"
 	| "UNLINK"
 	| "UNLOCK"
-	| "UNSUBSCRIBE"
+	| "UNSUBSCRIBE";

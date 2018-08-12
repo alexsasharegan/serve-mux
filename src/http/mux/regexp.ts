@@ -12,26 +12,32 @@
  */
 export class RouteRegExp {
 	// The unmodified template.
-	private template: string
+	private template: string;
 	// True for host match, false for path or query string match.
-	private matchHost: boolean
+	private matchHost: boolean;
 	// True for query string match, false for path and host match.
-	private matchQuery: boolean
+	private matchQuery: boolean;
 	// The strictSlash value defined on the route, but disabled if PathPrefix was used.
-	private strictSlash: boolean
+	private strictSlash: boolean;
 	// Determines whether to use encoded req.URL.EscapedPath() or unencoded
 	// req.URL.Path for path matching
-	private useEncodedPath: boolean
+	private useEncodedPath: boolean;
 	// Expanded regexp.
-	private regexp: RegExp
+	private regexp: RegExp;
 	// Reverse template.
-	private reverse: string
+	private reverse: string;
 	// Variable names.
-	private varsN: string[]
+	private varsN: string[];
 	// Variable regexps (validators).
-	private varsR: RegExp[]
+	private varsR: RegExp[];
 
-	constructor(tpl: string, matchHost: boolean, matchPrefix: boolean, matchQuery: boolean, strictSlash: boolean) {
+	constructor(
+		tpl: string,
+		matchHost: boolean,
+		matchPrefix: boolean,
+		matchQuery: boolean,
+		strictSlash: boolean,
+	) {
 		// Check if it is well-formed.
 		// idxs, errBraces := braceIndices(tpl)
 		// if errBraces != nil {

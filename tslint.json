@@ -111,7 +111,7 @@
 		},
 		"radix": true,
 		"semicolon": {
-			"options": ["never"]
+			"options": ["always"]
 		},
 		"space-before-function-paren": {
 			"options": {

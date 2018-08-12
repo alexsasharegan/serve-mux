@@ -4,8 +4,8 @@ export function Bind<T extends Function>(
 	descriptor: TypedPropertyDescriptor<T>
 ): void {
 	if (!descriptor.value) {
-		throw new TypeError()
+		throw new TypeError();
 	}
 
-	descriptor.value = descriptor.value.bind(target)
+	descriptor.value = descriptor.value.bind(target);
 }

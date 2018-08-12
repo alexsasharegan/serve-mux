@@ -1,3 +1,4 @@
-import * as mux from "./http/mux/index"
+import * as mux from "./http/mux/index";
 
-export { mux }
+export { mux };
+export default mux;
