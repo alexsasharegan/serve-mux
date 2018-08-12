@@ -36,17 +36,17 @@
 	},
 	"jest": {
 		"testEnvironment": "node",
+		"transform": {
+			"^.+\\.tsx?$": "ts-jest"
+		},
+		"testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
 		"moduleFileExtensions": [
 			"ts",
 			"tsx",
-			"js"
-		],
-		"transform": {
-			"\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
-		},
-		"testMatch": [
-			"**/__tests__/*.(ts|js)",
-			"**/?(*.)(spec|test).(js|ts)"
+			"js",
+			"jsx",
+			"json",
+			"node"
 		]
 	},
 	"homepage": "https://github.com/alexsasharegan/serve-mux#readme",
